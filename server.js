@@ -5,14 +5,12 @@
 let express = require('express');
 let app = express();
 
-const moment = require('moment');
-const utcFormat = 'ddd, DD MMM YYYY HH:mm:ss';
-
-
 // enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
-// so that your API is remotely testable by FCC 
+// so that your API is remotely testable by FCC
 let cors = require('cors');
-app.use(cors({optionsSuccessStatus: 200}));  // some legacy browsers choke on 204
+app.use(cors({
+  optionsSuccessStatus: 200
+})); // some legacy browsers choke on 204
 
 // http://expressjs.com/en/starter/static-files.html
 app.use(express.static('public'));
@@ -23,37 +21,41 @@ app.get("/", function (req, res) {
 });
 
 app.get('/api/timestamp/', (req, res) => {
-  let timeInUtc = `${moment().utc().local().format(utcFormat)} GMT`;
-  let timeInUnix = moment().unix();
-
   res.json({
-      "unix": timeInUnix,
-      "utc": timeInUtc
-  })
-})
+    unix: Date.now(),
+    utc: Date()
+  });
+});
 
 app.get('/api/timestamp/:date', (req, res) => {
   const time = req.params.date;
-  const isTimeNaN = isNaN(time);
 
-  let timestamp = moment(time);
-  
-  if (!timestamp.isValid()) { 
-      res.json({ "error": "Invalid Date" });
+  if (/\d{5,}/.test(time)) {
+    res.json({
+      unix: parseInt(time),
+      utc: new Date(time).toUTCString()
+    });
   } else {
-      let timeInUnix = isTimeNaN ? moment(timestamp).unix() : time;
-      let timeInUtc = isTimeNaN ? moment(timestamp).format(utcFormat) : moment(timeInUnix * 1000).format(utcFormat);
-  
+    let object = new Date(time)
+
+    if (object.toString() === "Invalid Date") {
       res.json({
-          "unix": timeInUnix,
-          "utc": timeInUtc
+        error: "Invalid Date"
       });
+    } else {
+      res.json({
+        unix: object.valueOf(),
+        utc: object.toUTCString()
+      });
+    }
   }
 });
 
 // your first API endpoint... 
 app.get("/api/hello", function (req, res) {
-  res.json({greeting: 'hello API'});
+  res.json({
+    greeting: 'hello API'
+  });
 });
 
 const port = process.env.PORT || 3000;
